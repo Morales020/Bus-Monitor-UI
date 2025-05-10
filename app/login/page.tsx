@@ -11,6 +11,14 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { authApi } from "@/lib/api-service"
 
+// Import the ApiError type
+interface ApiError extends Error {
+  response?: {
+    status: number;
+    data: any;
+  };
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -68,21 +76,8 @@ export default function LoginPage() {
       router.push(`/${role}/dashboard`)
     } catch (error: any) {
       setPassword("") // Clear password on error
-
-      // Handle specific error cases
-      let errorMessage = "Please check your credentials and try again."
-
-      if (error.message) {
-        errorMessage = error.message
-      } else if (error.response?.status === 401) {
-        errorMessage = "Invalid username or password. Please try again."
-      } else if (error.response?.status === 403) {
-        errorMessage = "Access denied. Please check your role and try again."
-      } else if (error.response?.status === 404) {
-        errorMessage = "User not found. Please check your username and try again."
-      }
-
-      setError(errorMessage)
+      // Always show the same error for any backend login failure
+      setError("Invalid username or password.")
     } finally {
       setIsLoading(false)
     }

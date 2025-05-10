@@ -3,6 +3,7 @@
 // Base URL for API
 const API_BASE_URL = "http://busmonitor.runasp.net"
 
+
 // Helper function to get auth token
 const getAuthToken = () => {
   if (typeof window === 'undefined') return null
@@ -19,10 +20,9 @@ const getAuthToken = () => {
 // Helper function to handle API responses
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message || "An error occurred while fetching data")
+    throw new Error("An error occurred while fetching data");
   }
-  return response.json()
+  return response.json();
 }
 
 // Helper function to create headers with auth token
