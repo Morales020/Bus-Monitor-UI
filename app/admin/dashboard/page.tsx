@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { PlusCircle, Users, BusIcon, Calendar, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { adminApi } from "@/lib/api-service"
 
 export default function AdminDashboard() {
   const { toast } = useToast()
@@ -19,74 +20,37 @@ export default function AdminDashboard() {
     pendingIssues: 0,
   })
   const [tripsData, setTripsData] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [trips, setTrips] = useState<any[]>([])
+  // If you have issues API, add: const [issues, setIssues] = useState<any[]>([])
 
   useEffect(() => {
-    // API INTEGRATION POINT: Fetch dashboard data
-    // Example:
-    // const fetchDashboardData = async () => {
-    //   try {
-    //     const statsResponse = await fetch('/api/admin/stats');
-    //     const statsData = await statsResponse.json();
-    //     setStats(statsData);
-    //
-    //     const tripsResponse = await fetch('/api/admin/active-trips');
-    //     const tripsData = await tripsResponse.json();
-    //     setTripsData(tripsData);
-    //   } catch (error) {
-    //     console.error('Error fetching dashboard data:', error);
-    //     toast({
-    //       variant: "destructive",
-    //       title: "Error",
-    //       description: "Failed to load dashboard data. Please try again.",
-    //     });
-    //   } finally {
-    //     setIsLoading(false);
-    //   }
-    // };
-    // fetchDashboardData();
+    const fetchData = async () => {
+      try {
+        const [usersData, tripsData] = await Promise.all([
+          adminApi.getUsers(),
+          adminApi.getTrips(),
+        ])
+        setUsers(usersData)
+        setTrips(tripsData)
+        // setIssues(issuesData)
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load dashboard data. Please try again.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [toast])
 
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      // Mock data
-      setStats({
-        totalUsers: 45,
-        totalBuses: 12,
-        activeTrips: 8,
-        pendingIssues: 3,
-      })
-
-      setTripsData([
-        {
-          id: 1,
-          busNumber: "Bus 42",
-          route: "North Route",
-          driver: "Michael Brown",
-          supervisor: "Sarah Williams",
-          status: "active",
-        },
-        {
-          id: 2,
-          busNumber: "Bus 37",
-          route: "South Route",
-          driver: "Jessica Taylor",
-          supervisor: "David Johnson",
-          status: "active",
-        },
-        {
-          id: 3,
-          busNumber: "Bus 15",
-          route: "East Route",
-          driver: "Robert Wilson",
-          supervisor: "Emily Davis",
-          status: "active",
-        },
-      ])
-
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [])
+  const totalUsers = users.length
+  const totalTrips = trips.length
+  const activeTrips = trips.filter(t => t.status?.toLowerCase() === "active").length
+  // const pendingIssues = issues.length // If you have issues API
 
   if (isLoading) {
     return (
@@ -110,7 +74,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-3xl font-bold">{stats.totalUsers}</p>
+                <p className="text-3xl font-bold">{totalUsers}</p>
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Users className="h-6 w-6 text-primary" />
@@ -152,7 +116,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Trips</p>
-                <p className="text-3xl font-bold">{stats.activeTrips}</p>
+                <p className="text-3xl font-bold">{activeTrips}</p>
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Calendar className="h-6 w-6 text-primary" />
@@ -186,6 +150,15 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="flex gap-8 mb-6">
+        <div className="text-lg font-semibold">
+          Total Users: <span className="text-primary">{users.length}</span>
+        </div>
+        <div className="text-lg font-semibold">
+          Total Trips: <span className="text-primary">{trips.length}</span>
+        </div>
       </div>
 
       <Tabs defaultValue="recent">

@@ -14,6 +14,7 @@ import { ArrowLeft, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { adminApi } from "@/lib/api-service"
 
 export default function NewTripPage() {
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function NewTripPage() {
     route: "",
     driver: "",
     supervisor: "",
-    status: "scheduled",
+    status: "Planned",
     date: "",
     startTime: "",
     endTime: "",
@@ -35,70 +36,36 @@ export default function NewTripPage() {
   const [availableDrivers, setAvailableDrivers] = useState<any[]>([])
   const [availableSupervisors, setAvailableSupervisors] = useState<any[]>([])
 
+
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
-        setIsLoading(true)
+        const users = await adminApi.getUsers()
+        setAvailableDrivers(users.filter((u: any) => u.role === "driver"))
+        setAvailableSupervisors(users.filter((u: any) => u.role === "supervisor"))
+        // Set default date to tomorrow
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const formattedDate = tomorrow.toISOString().split("T")[0]
 
-        // API integration point: Fetch available buses, drivers, and supervisors
-        // Example:
-        // const [busesResponse, driversResponse, supervisorsResponse] = await Promise.all([
-        //   fetch('/api/buses'),
-        //   fetch('/api/users?role=driver'),
-        //   fetch('/api/users?role=supervisor')
-        // ]);
-        // const buses = await busesResponse.json();
-        // const drivers = await driversResponse.json();
-        // const supervisors = await supervisorsResponse.json();
-        // setAvailableBuses(buses);
-        // setAvailableDrivers(drivers);
-        // setAvailableSupervisors(supervisors);
-
-        // Simulate API call with mock data
-        setTimeout(() => {
-          setAvailableBuses([
-            { id: "1", busNumber: "Bus 42" },
-            { id: "2", busNumber: "Bus 37" },
-            { id: "3", busNumber: "Bus 15" },
-          ])
-
-          setAvailableDrivers([
-            { id: "1", name: "Michael Brown" },
-            { id: "2", name: "Jessica Taylor" },
-            { id: "3", name: "Robert Wilson" },
-          ])
-
-          setAvailableSupervisors([
-            { id: "1", name: "Sarah Williams" },
-            { id: "2", name: "David Johnson" },
-            { id: "3", name: "Emily Davis" },
-          ])
-
-          // Set default date to tomorrow
-          const tomorrow = new Date()
-          tomorrow.setDate(tomorrow.getDate() + 1)
-          const formattedDate = tomorrow.toISOString().split("T")[0]
-
-          setTripData((prev) => ({
-            ...prev,
-            date: formattedDate,
-          }))
-
-          setIsLoading(false)
-        }, 1000)
+        setTripData((prev: any) => ({
+          ...prev,
+          date: formattedDate,
+        }))
       } catch (error) {
-        console.error("Error fetching data:", error)
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load data. Please try again.",
+          description: "Failed to load users data. Please try again.",
         })
+      } finally {
         setIsLoading(false)
       }
     }
-
-    fetchData()
+    fetchUsers()
   }, [toast])
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

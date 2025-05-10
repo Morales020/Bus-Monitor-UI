@@ -10,7 +10,7 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
+import { adminApi } from "@/lib/api-service"
 export default function UsersPage() {
   const { toast } = useToast()
   const [usersData, setUsersData] = useState<any[]>([])
@@ -21,115 +21,53 @@ export default function UsersPage() {
   useEffect(() => {
     // API INTEGRATION POINT: Fetch users
     // Example:
-    // const fetchUsers = async () => {
-    //   try {
-    //     const response = await fetch('/api/admin/users');
-    //     const data = await response.json();
-    //     setUsersData(data);
-    //   } catch (error) {
-    //     console.error('Error fetching users:', error);
-    //     toast({
-    //       variant: "destructive",
-    //       title: "Error",
-    //       description: "Failed to load users data. Please try again.",
-    //     });
-    //   } finally {
-    //     setIsLoading(false);
-    //   }
-    // };
-    // fetchUsers();
+    const fetchUsers = async () => {
+      try {
+        const data = await adminApi.getUsers();
+        console.log('Fetched users data:', data); // Debug log
+        setUsersData(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load users data. Please try again.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
 
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      // Mock data
-      setUsersData([
-        {
-          id: 1,
-          name: "John Smith",
-          email: "john.admin@example.com",
-          role: "admin",
-          status: "active",
-          lastLogin: "2023-05-10 14:30:22",
-        },
-        {
-          id: 2,
-          name: "Sarah Williams",
-          email: "sarah.supervisor@example.com",
-          role: "supervisor",
-          status: "active",
-          lastLogin: "2023-05-09 09:15:45",
-        },
-        {
-          id: 3,
-          name: "Michael Brown",
-          email: "michael.driver@example.com",
-          role: "driver",
-          status: "active",
-          lastLogin: "2023-05-10 07:45:12",
-        },
-        {
-          id: 4,
-          name: "Jessica Taylor",
-          email: "jessica.driver@example.com",
-          role: "driver",
-          status: "active",
-          lastLogin: "2023-05-10 08:10:33",
-        },
-        {
-          id: 5,
-          name: "David Johnson",
-          email: "david.parent@example.com",
-          role: "parent",
-          status: "active",
-          lastLogin: "2023-05-08 18:22:10",
-        },
-        {
-          id: 6,
-          name: "Emily Davis",
-          email: "emily.parent@example.com",
-          role: "parent",
-          status: "inactive",
-          lastLogin: "2023-04-25 11:30:45",
-        },
-        {
-          id: 7,
-          name: "Robert Wilson",
-          email: "robert.driver@example.com",
-          role: "driver",
-          status: "active",
-          lastLogin: "2023-05-09 06:55:18",
-        },
-      ])
+    // Remove the mock data timer since we're using real API now
+    // const timer = setTimeout(() => {
+    //   setIsLoading(false)
+    // }, 1000)
 
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    // return () => clearTimeout(timer)
   }, [toast])
 
   const handleDeleteUser = (userId: number) => {
     // API INTEGRATION POINT: Delete user
     // Example:
-    // const deleteUser = async () => {
-    //   try {
-    //     await fetch(`/api/admin/users/${userId}`, {
-    //       method: 'DELETE'
-    //     });
-    //     setUsersData(prev => prev.filter(user => user.id !== userId));
-    //     toast({
-    //       title: "User Deleted",
-    //       description: "The user has been deleted successfully.",
-    //     });
-    //   } catch (error) {
-    //     console.error('Error deleting user:', error);
-    //     toast({
-    //       variant: "destructive",
-    //       title: "Error",
-    //       description: "Failed to delete user. Please try again.",
-    //     });
-    //   }
-    // };
-    // deleteUser();
+    const deleteUser = async () => {
+      try {
+        await adminApi.deleteUser(userId);
+        setUsersData(prev => prev.filter(user => user.id !== userId));
+        toast({
+          title: "User Deleted",
+          description: "The user has been deleted successfully.",
+        });
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete user. Please try again.",
+        });
+      }
+    };
+    deleteUser();
 
     // Update local state
     setUsersData((prev) => prev.filter((user) => user.id !== userId))
@@ -151,7 +89,8 @@ export default function UsersPage() {
   })
 
   const getUserRoleBadge = (role: string) => {
-    switch (role) {
+    console.log('Rendering role badge for:', role); // Debug log
+    switch (role?.toLowerCase()) {
       case "admin":
         return <Badge className="bg-red-500">Admin</Badge>
       case "supervisor":
@@ -161,18 +100,19 @@ export default function UsersPage() {
       case "parent":
         return <Badge className="bg-green-500">Parent</Badge>
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">{role || 'Unknown'}</Badge>
     }
   }
 
-  const getUserStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
+  const getUserStatusBadge = (IsActive: string) => {
+    console.log('Rendering status badge for:', IsActive); // Debug log
+    switch (IsActive?.toLowerCase()) {
+      case "true":
         return <Badge className="bg-green-500">Active</Badge>
-      case "inactive":
+      case "false":
         return <Badge variant="destructive">Inactive</Badge>
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">{IsActive || 'Unknown'}</Badge>
     }
   }
 

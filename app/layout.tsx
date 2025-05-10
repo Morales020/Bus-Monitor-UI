@@ -3,13 +3,14 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import ThemeWrapper from "@/components/theme-wrapper"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Bus Monitoring System",
   description: "Track and monitor school buses in real-time",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -26,6 +27,7 @@ export default function RootLayout({
               {/* Navbar will be rendered inside each page that needs it */}
               <main className="flex-1">{children}</main>
             </div>
+            <Toaster />
           </ThemeWrapper>
         </ThemeProvider>
       </body>

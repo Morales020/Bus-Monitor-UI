@@ -1,7 +1,20 @@
 // API service for interacting with .NET backend
 
 // Base URL for API
-const API_BASE_URL ="https://api.busmonitoring.com"
+const API_BASE_URL = "http://busmonitor.runasp.net"
+
+// Helper function to get auth token
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null
+  const user = localStorage.getItem('user')
+  if (!user) return null
+  try {
+    const userData = JSON.parse(user)
+    return userData.token
+  } catch {
+    return null
+  }
+}
 
 // Helper function to handle API responses
 const handleResponse = async (response: Response) => {
@@ -12,39 +25,54 @@ const handleResponse = async (response: Response) => {
   return response.json()
 }
 
+// Helper function to create headers with auth token
+const createHeaders = (includeContentType = true) => {
+  const headers: Record<string, string> = {}
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json'
+  }
+  const token = getAuthToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
+
 // Authentication API endpoints
 export const authApi = {
   login: async (credentials: { username: string; password: string; role: string }) => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/Auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(credentials),
     })
     return handleResponse(response)
   },
   logout: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    const response = await fetch(`${API_BASE_URL}/api/Auth/logout`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
     })
     return handleResponse(response)
   },
   changePassword: async (data: { currentPassword: string; newPassword: string }) => {
-    const response = await fetch(`${API_BASE_URL}/api/user/change-password`, {
+    const response = await fetch(`${API_BASE_URL}/api/Users`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(data),
     })
     return handleResponse(response)
   },
   getUserProfile: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/user/profile`)
+    const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+      headers: createHeaders(false)
+    })
     return handleResponse(response)
   },
   updateUserProfile: async (data: any) => {
     const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(data),
     })
     return handleResponse(response)
@@ -55,79 +83,84 @@ export const authApi = {
 export const adminApi = {
   // User management
   getUsers: async (query = "") => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users${query ? `?${query}` : ""}`)
+    const response = await fetch(`${API_BASE_URL}/api/Users${query ? `?${query}` : ""}`, {
+      headers: createHeaders(false)
+    })
     return handleResponse(response)
   },
   getUserById: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`)
+    const response = await fetch(`${API_BASE_URL}/api/Users/${id}`, {
+      headers: createHeaders(false)
+    })
     return handleResponse(response)
   },
   createUser: async (userData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+    const response = await fetch(`${API_BASE_URL}/api/Users`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(userData),
     })
     return handleResponse(response)
   },
   updateUser: async (id: number, userData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Users/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(userData),
     })
     return handleResponse(response)
   },
   deleteUser: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Users/${id}`, {
       method: "DELETE",
+      headers: createHeaders(false)
     })
     return handleResponse(response)
   },
 
-  // Bus management
-  getBuses: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/buses`)
-    return handleResponse(response)
-  },
-  getBusById: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`)
-    return handleResponse(response)
-  },
-  createBus: async (busData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/buses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(busData),
-    })
-    return handleResponse(response)
-  },
-  updateBus: async (id: number, busData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(busData),
-    })
-    return handleResponse(response)
-  },
-  deleteBus: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`, {
-      method: "DELETE",
-    })
-    return handleResponse(response)
-  },
+  // // Bus management
+  // getBuses: async () => {
+  //   const response = await fetch(`${API_BASE_URL}/api/admin/buses`)
+  //   return handleResponse(response)
+  // },
+  // getBusById: async (id: number) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`)
+  //   return handleResponse(response)
+  // },
+  // createBus: async (busData: any) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/admin/buses`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(busData),
+  //   })
+  //   return handleResponse(response)
+  // },
+  // updateBus: async (id: number, busData: any) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`, {
+  //     method: "PUT",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(busData),
+  //   })
+  //   return handleResponse(response)
+  // },
+  // deleteBus: async (id: number) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/admin/buses/${id}`, {
+  //     method: "DELETE",
+  //   })
+  //   return handleResponse(response)
+  // },
 
   // Trip management
   getTrips: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips`)
+    const response = await fetch(`${API_BASE_URL}/api/Trips`)
     return handleResponse(response)
   },
   getTripById: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${id}`)
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`)
     return handleResponse(response)
   },
   createTrip: async (tripData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tripData),
@@ -135,7 +168,7 @@ export const adminApi = {
     return handleResponse(response)
   },
   updateTrip: async (id: number, tripData: any) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tripData),
@@ -143,37 +176,37 @@ export const adminApi = {
     return handleResponse(response)
   },
   deleteTrip: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`, {
       method: "DELETE",
     })
     return handleResponse(response)
   },
   assignStudentToTrip: async (tripId: number, studentId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${tripId}/students/${studentId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/students/${studentId}`, {
       method: "POST",
     })
     return handleResponse(response)
   },
   removeStudentFromTrip: async (tripId: number, studentId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${tripId}/students/${studentId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/students/${studentId}`, {
       method: "DELETE",
     })
     return handleResponse(response)
   },
   assignSupervisorToTrip: async (tripId: number, supervisorId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${tripId}/supervisor/${supervisorId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/supervisor/${supervisorId}`, {
       method: "POST",
     })
     return handleResponse(response)
   },
   assignDriverToTrip: async (tripId: number, driverId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${tripId}/driver/${driverId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/driver/${driverId}`, {
       method: "POST",
     })
     return handleResponse(response)
   },
   assignBusToTrip: async (tripId: number, busId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/admin/trips/${tripId}/bus/${busId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/bus/${busId}`, {
       method: "POST",
     })
     return handleResponse(response)

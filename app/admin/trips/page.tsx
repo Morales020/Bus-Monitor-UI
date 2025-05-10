@@ -14,17 +14,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 export default function TripsPage() {
   const { toast } = useToast()
-  const [tripsData, setTripsData] = useState<any[]>([])
+  const [trips, setTrips] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [users, setUsers] = useState<any[]>([])
 
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        setIsLoading(true)
-        const trips = await adminApi.getTrips()
-        setTripsData(trips)
+        const data = await adminApi.getTrips()
+        setTrips(data)
       } catch (error) {
         console.error("Error fetching trips:", error)
         toast({
@@ -40,10 +40,28 @@ export default function TripsPage() {
     fetchTrips()
   }, [toast])
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await adminApi.getUsers()
+        setUsers(data)
+      } catch (error) {
+        console.error("Error fetching users:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load users data. Please try again.",
+        })
+      }
+    }
+
+    fetchUsers()
+  }, [toast])
+
   const handleDeleteTrip = async (tripId: number) => {
     try {
       await adminApi.deleteTrip(tripId)
-      setTripsData((prev) => prev.filter((trip) => trip.id !== tripId))
+      setTrips((prev) => prev.filter((trip) => trip.id !== tripId))
       toast({
         title: "Trip Deleted",
         description: "The trip has been deleted successfully.",
@@ -58,7 +76,7 @@ export default function TripsPage() {
     }
   }
 
-  const filteredTrips = tripsData.filter((trip) => {
+  const filteredTrips = trips.filter((trip) => {
     const matchesSearch =
       trip.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       trip.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,19 +89,20 @@ export default function TripsPage() {
   })
 
   const getTripStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "active":
-        return <Badge className="bg-green-500">Active</Badge>
+        return <Badge className="bg-green-500 text-white">{status}</Badge>
       case "completed":
-        return <Badge className="bg-blue-500">Completed</Badge>
-      case "scheduled":
-        return <Badge variant="outline">Scheduled</Badge>
+        return <Badge className="bg-blue-500 text-white">{status}</Badge>
+      case "planned":
+        return <Badge className="bg-yellow-500 text-black">{status}</Badge>
       case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>
+        return <Badge className="bg-red-500 text-white">{status}</Badge>
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">{status || "Unknown"}</Badge>
     }
   }
+
 
   if (isLoading) {
     return (
@@ -136,7 +155,7 @@ export default function TripsPage() {
                 <DropdownMenuItem onClick={() => setStatusFilter(null)}>All Statuses</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setStatusFilter("active")}>Active</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setStatusFilter("completed")}>Completed</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("scheduled")}>Scheduled</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("planned")}>Planned</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>Cancelled</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -150,12 +169,15 @@ export default function TripsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Bus Number</TableHead>
+                  <TableHead>Id</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Bus</TableHead>
                   <TableHead>Route</TableHead>
                   <TableHead>Driver</TableHead>
                   <TableHead>Supervisor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Admin</TableHead>
+                  <TableHead>ArrivalTime</TableHead>
+                  <TableHead>DepartureTime</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,12 +185,15 @@ export default function TripsPage() {
                 {filteredTrips.length > 0 ? (
                   filteredTrips.map((trip) => (
                     <TableRow key={trip.id}>
-                      <TableCell className="font-medium">{trip.busNumber}</TableCell>
-                      <TableCell>{trip.route}</TableCell>
-                      <TableCell>{trip.driver}</TableCell>
-                      <TableCell>{trip.supervisor}</TableCell>
+                      <TableCell>{trip.id}</TableCell>
                       <TableCell>{getTripStatusBadge(trip.status)}</TableCell>
-                      <TableCell>{trip.date}</TableCell>
+                      <TableCell>{trip.busNumber}</TableCell>
+                      <TableCell>{trip.routeName}</TableCell>
+                      <TableCell>{trip.driverName}</TableCell>
+                      <TableCell>{trip.supervisorName}</TableCell>
+                      <TableCell>{trip.adminName}</TableCell>
+                      <TableCell>{trip.arrivalTime ?? "N/A"}</TableCell>
+                      <TableCell>{trip.departureTime ?? "N/A"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <div className="flex space-x-2">
@@ -197,7 +222,7 @@ export default function TripsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       No trips found matching your criteria
                     </TableCell>
                   </TableRow>

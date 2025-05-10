@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { authApi } from "@/lib/api-service"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,36 +17,46 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault()
     setIsLoading(true)
+    setError("") // Clear any previous errors
 
     try {
       // Extract role from username (format: name.role)
       const usernameParts = username.split(".")
 
       if (usernameParts.length !== 2) {
-        throw new Error("Username should be in the format 'name.role' (e.g., john.admin)")
+        setPassword("") // Clear password on error
+        setError("Username should be in the format 'name.role' (e.g., john.admin)")
+        return
       }
 
       const role = usernameParts[1].toLowerCase()
 
       // Validate role
       if (!["admin", "supervisor", "driver", "parent"].includes(role)) {
-        throw new Error("Invalid role. Role must be admin, supervisor, or parent")
+        setPassword("") // Clear password on error
+        setError("Invalid role. Role must be admin, supervisor, driver, or parent")
+        return
       }
 
-      // In a real app, you would validate credentials with your backend here
-      // API INTEGRATION POINT: Add your authentication API call here
+      const response = await authApi.login({
+        username: username,
+        password,
+        role
+      })
 
       // Store user info for the session
       localStorage.setItem(
         "user",
         JSON.stringify({
-          username: usernameParts[0],
+          username: username,
           role: role,
-        }),
+          token: response.token
+        })
       )
 
       toast({
@@ -56,11 +67,22 @@ export default function LoginPage() {
       // Redirect based on role
       router.push(`/${role}/dashboard`)
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
-      })
+      setPassword("") // Clear password on error
+
+      // Handle specific error cases
+      let errorMessage = "Please check your credentials and try again."
+
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid username or password. Please try again."
+      } else if (error.response?.status === 403) {
+        errorMessage = "Access denied. Please check your role and try again."
+      } else if (error.response?.status === 404) {
+        errorMessage = "User not found. Please check your username and try again."
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -75,14 +97,23 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value)
+                  setError("") // Clear error when user types
+                }}
                 placeholder="username.role (e.g., john.admin)"
                 required
+                className={error ? "border-red-500" : ""}
               />
               <p className="text-xs text-muted-foreground">
                 Format: name.role (e.g., john.admin, sarah.supervisor, mike.driver, emma.parent)
@@ -94,8 +125,12 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setError("") // Clear error when user types
+                }}
                 required
+                className={error ? "border-red-500" : ""}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
