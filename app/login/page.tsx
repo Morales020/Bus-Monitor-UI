@@ -43,7 +43,6 @@ export default function LoginPage() {
       }
 
       const role = usernameParts[1].toLowerCase()
-
       // Validate role
       if (!["admin", "supervisor", "driver", "parent"].includes(role)) {
         setPassword("") // Clear password on error
@@ -61,11 +60,13 @@ export default function LoginPage() {
       localStorage.setItem(
         "user",
         JSON.stringify({
+          id: response.id,
           username: username,
           role: role,
           token: response.token
         })
       )
+      console.log(response.id)
 
       toast({
         title: "Login successful",

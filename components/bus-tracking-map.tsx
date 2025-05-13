@@ -1,42 +1,46 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { useEffect } from "react";
+
+// Fix default marker icon issue in Leaflet with Next.js
+const icon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png",
+  shadowSize: [41, 41],
+});
 
 export default function BusTrackingMap() {
-  const mapRef = useRef<HTMLDivElement>(null)
-  const [isMapLoaded, setIsMapLoaded] = useState(false)
+  // Optionally, you can fetch route/bus data here and render markers/polylines
 
+  // Prevent map rendering issues on SSR
   useEffect(() => {
-    // This is a placeholder for the actual map implementation
-    // In a real application, you would integrate with a mapping service like Google Maps, Mapbox, etc.
-
-    // For this example, we'll just simulate a map loading
-    const timer = setTimeout(() => {
-      setIsMapLoaded(true)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [])
+    // This is just to ensure leaflet CSS is loaded
+  }, []);
 
   return (
-    <div ref={mapRef} className="w-full h-full bg-muted rounded-md overflow-hidden relative">
-      {!isMapLoaded ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-lg font-medium mb-2">Map Placeholder</p>
-            <p className="text-sm text-muted-foreground">
-              In a real implementation, this would show an interactive map with bus locations.
-            </p>
-            <p className="text-sm text-muted-foreground mt-4">
-              Connect to your mapping service and bus location API here.
-            </p>
-          </div>
-        </div>
-      )}
+    <div className="w-full h-[350px] rounded-lg overflow-hidden">
+      <MapContainer
+        center={[40.7128, -74.006]} // Example: New York City
+        zoom={13}
+        scrollWheelZoom={true}
+        style={{ height: "100%", width: "100%" }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={[40.7128, -74.006]} icon={icon}>
+          <Popup>
+            Bus Location (Demo)
+          </Popup>
+        </Marker>
+      </MapContainer>
     </div>
-  )
+  );
 }

@@ -12,53 +12,46 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { Save, Key, Bell } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import { adminApi, authApi } from "@/lib/api-service"
+
+type AdminData = {
+  id: number
+  name: string
+  email: string
+  role: string
+  phoneNumber: string
+  username: string
+}
 
 export default function ProfilePage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [userData, setUserData] = useState<any | null>(null)
+  const [userData, setUserData] = useState<AdminData | null>(null)
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true)
-
-        // API integration point: Fetch user profile data
-        // Example:
-        // const response = await fetch('/api/admin/profile');
-        // const data = await response.json();
-        // setUserData(data);
-
-        // Simulate API call with mock data
-        setTimeout(() => {
-          const mockUserData = {
-            name: "Admin User",
-            email: "admin@example.com",
-            phone: "555-123-4567",
-            role: "admin",
-            avatar: null,
-            notificationPreferences: {
-              email: true,
-              push: true,
-              sms: false,
-            },
-          }
-
-          setUserData(mockUserData)
-          setIsLoading(false)
-        }, 1000)
+        const userStr = localStorage.getItem('user')
+        if (!userStr) throw new Error('No user data found in localStorage')
+        const userData = JSON.parse(userStr)
+        console.log('userData from localStorage:', userData)
+        const adminId = userData?.id
+        if (!adminId || isNaN(Number(adminId))) throw new Error('No valid admin id found in user data')
+        const admin = await adminApi.getUserById(Number(adminId))
+        setUserData(admin)
       } catch (error) {
-        console.error("Error fetching user data:", error)
+        console.error('Error fetching user data:', error)
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to load profile data. Please try again.",
         })
+      } finally {
         setIsLoading(false)
       }
     }
-
     fetchUserData()
   }, [toast])
 
@@ -67,34 +60,18 @@ export default function ProfilePage() {
     setUserData((prev: any) => ({ ...prev, [name]: value }))
   }
 
-  const handleNotificationPreferenceChange = (key: string, checked: boolean) => {
-    setUserData((prev: any) => ({
-      ...prev,
-      notificationPreferences: {
-        ...prev.notificationPreferences,
-        [key]: checked,
-      },
-    }))
-  }
-
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!userData) return
+
     setIsSaving(true)
-
     try {
-      // API integration point: Update user profile
-      // Example:
-      // const response = await fetch('/api/admin/profile', {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(userData),
-      // });
-      // if (!response.ok) throw new Error('Failed to update profile');
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await adminApi.updateUser(userData.id, {
+        name: userData.name,
+        email: userData.email,
+        phoneNumber: userData.phoneNumber,
+        username: userData.username
+      })
 
       toast({
         title: "Profile Updated",
@@ -114,38 +91,35 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!userData) return
 
-    // This would typically validate that the passwords match and meet requirements
+    const form = e.target as HTMLFormElement
+    const formData = new FormData(form)
+    const currentPassword = formData.get('currentPassword')
+    const newPassword = formData.get('newPassword')
+
+    if (!currentPassword || !newPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all password fields.",
+      })
+      return
+    }
 
     setIsSaving(true)
-
     try {
-      // API integration point: Change password
-      // Example:
-      // const formData = new FormData(e.target as HTMLFormElement);
-      // const response = await fetch('/api/admin/change-password', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     currentPassword: formData.get('currentPassword'),
-      //     newPassword: formData.get('newPassword'),
-      //   }),
-      // });
-      // if (!response.ok) throw new Error('Failed to change password');
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await authApi.changePassword({
+        currentPassword: currentPassword.toString(),
+        newPassword: newPassword.toString()
+      })
 
       toast({
         title: "Password Changed",
         description: "Your password has been changed successfully.",
       })
 
-      // Reset the form
-      const form = document.getElementById("password-form") as HTMLFormElement
-      if (form) form.reset()
+      form.reset()
     } catch (error) {
       console.error("Error changing password:", error)
       toast({
@@ -169,6 +143,17 @@ export default function ProfilePage() {
     )
   }
 
+  if (!userData) {
+    return (
+      <div className="container py-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500">Error Loading Profile</h1>
+          <p className="mt-2">Please try refreshing the page or contact support if the problem persists.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-6">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
@@ -177,7 +162,6 @@ export default function ProfilePage() {
         <TabsList className="mb-4">
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -191,12 +175,9 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
                   <div className="flex flex-col items-center">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={userData.avatar || "/placeholder.svg?height=96&width=96"} alt={userData.name} />
+                      <AvatarImage src="/placeholder.svg?height=96&width=96" alt={userData.name} />
                       <AvatarFallback className="text-2xl">{userData.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <Button variant="outline" size="sm" className="mt-4">
-                      Change Avatar
-                    </Button>
                   </div>
                   <div className="flex-1 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,11 +205,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
                         <Input
-                          id="phone"
-                          name="phone"
-                          value={userData.phone}
+                          id="phoneNumber"
+                          name="phoneNumber"
+                          value={userData.phoneNumber}
                           onChange={handleInputChange}
                           placeholder="Enter your phone number"
                         />
@@ -279,8 +260,8 @@ export default function ProfilePage() {
                     id="currentPassword"
                     name="currentPassword"
                     type="password"
-                    placeholder="Enter your current password"
                     required
+                    placeholder="Enter your current password"
                   />
                 </div>
                 <div className="space-y-2">
@@ -289,18 +270,8 @@ export default function ProfilePage() {
                     id="newPassword"
                     name="newPassword"
                     type="password"
+                    required
                     placeholder="Enter your new password"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your new password"
-                    required
                   />
                 </div>
               </CardContent>
@@ -320,65 +291,6 @@ export default function ProfilePage() {
                 </Button>
               </CardFooter>
             </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                </div>
-                <Switch
-                  id="email-notifications"
-                  checked={userData.notificationPreferences.email}
-                  onCheckedChange={(checked) => handleNotificationPreferenceChange("email", checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="push-notifications">Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications on your device</p>
-                </div>
-                <Switch
-                  id="push-notifications"
-                  checked={userData.notificationPreferences.push}
-                  onCheckedChange={(checked) => handleNotificationPreferenceChange("push", checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="sms-notifications">SMS Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications via text message</p>
-                </div>
-                <Switch
-                  id="sms-notifications"
-                  checked={userData.notificationPreferences.sms}
-                  onCheckedChange={(checked) => handleNotificationPreferenceChange("sms", checked)}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button type="button" onClick={handleSaveProfile} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Bell className="mr-2 h-4 w-4" />
-                    Save Preferences
-                  </>
-                )}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

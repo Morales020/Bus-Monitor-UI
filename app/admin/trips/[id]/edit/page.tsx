@@ -14,129 +14,139 @@ import { ArrowLeft, Save } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { adminApi } from "@/lib/api-service"
+
+// --- Types ---
+type TripData = {
+  id: string | number
+  status: string
+  busId: string | number
+  busNumber: string
+  routeId: string | number
+  routeName: string
+  driverId: string | number
+  driverName: string
+  supervisorId: string | number
+  supervisorName: string
+  arrivalTime: string
+  departureTime: string
+}
 
 export default function EditTripPage() {
+  // --- Hooks & State ---
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [tripData, setTripData] = useState<any>({
+  const [tripData, setTripData] = useState<TripData>({
     id: "",
-    busNumber: "",
-    route: "",
-    driver: "",
-    supervisor: "",
     status: "",
-    date: "",
-    startTime: "",
-    endTime: "",
-    notes: "",
+    busId: "",
+    busNumber: "",
+    routeId: "",
+    routeName: "",
+    driverId: "",
+    driverName: "",
+    supervisorId: "",
+    supervisorName: "",
+    arrivalTime: "",
+    departureTime: "",
   })
   const [availableBuses, setAvailableBuses] = useState<any[]>([])
   const [availableDrivers, setAvailableDrivers] = useState<any[]>([])
   const [availableSupervisors, setAvailableSupervisors] = useState<any[]>([])
+  const tripId = Number(params.id)
 
-  const tripId = params.id
-
+  // --- Data Fetching ---
   useEffect(() => {
-    const fetchTripData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-
-        // API integration point: Fetch trip data
-        // Example:
-        // const response = await fetch(`/api/trips/${tripId}`);
-        // const data = await response.json();
-        // setTripData(data);
-
-        // Simulate API call with mock data
-        setTimeout(() => {
-          setTripData({
-            id: tripId,
-            busNumber: "Bus 42",
-            route: "North Route",
-            driver: "Michael Brown",
-            driverId: "1",
-            supervisor: "Sarah Williams",
-            supervisorId: "2",
-            status: "scheduled",
-            date: "2025-05-10",
-            startTime: "07:30",
-            endTime: "08:30",
-            notes: "Regular morning route with stops at Main St, Oak Ave, and Pine Rd.",
-          })
-
-          setAvailableBuses([
-            { id: "1", busNumber: "Bus 42" },
-            { id: "2", busNumber: "Bus 37" },
-            { id: "3", busNumber: "Bus 15" },
-          ])
-
-          setAvailableDrivers([
-            { id: "1", name: "Michael Brown" },
-            { id: "2", name: "Jessica Taylor" },
-            { id: "3", name: "Robert Wilson" },
-          ])
-
-          setAvailableSupervisors([
-            { id: "1", name: "Sarah Williams" },
-            { id: "2", name: "David Johnson" },
-            { id: "3", name: "Emily Davis" },
-          ])
-
-          setIsLoading(false)
-        }, 1000)
+        const trip = await adminApi.getTripById(tripId)
+        setTripData(trip)
+        setAvailableBuses([{ id: trip.busId, busNumber: trip.busNumber }, { id: 2, busNumber: "Bus 2" }])
+        const users = await adminApi.getUsers()
+        setAvailableSupervisors(users.filter((user: any) => user.role === "Supervisor"))
+        setAvailableDrivers(users.filter((user: any) => user.role === "Driver"))
       } catch (error) {
-        console.error("Error fetching trip data:", error)
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load trip data. Please try again.",
+          description: "Failed to load data. Please try again.",
         })
+      } finally {
         setIsLoading(false)
       }
     }
-
-    fetchTripData()
+    fetchData()
   }, [tripId, toast])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // --- Handlers ---
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setTripData((prev: any) => ({ ...prev, [name]: value }))
+    setTripData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (name: string, value: string) => {
-    setTripData((prev: any) => ({ ...prev, [name]: value }))
+  const handleBusChange = (value: string) => {
+    const bus = availableBuses.find(b => b.id === value)
+    setTripData(prev => ({
+      ...prev,
+      busId: value,
+      busNumber: bus ? bus.busNumber : "",
+    }))
+  }
+  const handleDriverChange = (value: string) => {
+    const driver = availableDrivers.find(d => String(d.id) === value)
+    setTripData(prev => ({
+      ...prev,
+      driverId: value,
+      driverName: driver ? driver.name : "",
+    }))
+  }
+  const handleSupervisorChange = (value: string) => {
+    const supervisor = availableSupervisors.find(s => String(s.id) === value)
+    setTripData(prev => ({
+      ...prev,
+      supervisorId: value,
+      supervisorName: supervisor ? supervisor.name : "",
+    }))
+  }
+  const handleStatusChange = (value: string) => {
+    setTripData(prev => ({ ...prev, status: value.charAt(0).toUpperCase() + value.slice(1) }))
   }
 
+  // --- Submit ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-
     try {
-      // API integration point: Update trip
-      // Example:
-      // const response = await fetch(`/api/trips/${tripId}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(tripData),
-      // });
-      // if (!response.ok) throw new Error('Failed to update trip');
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      if (!tripData.busId || !tripData.driverId || !tripData.supervisorId || !tripData.status || !tripData.arrivalTime || !tripData.departureTime || !tripData.routeId) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please fill in all required fields.",
+        })
+        setIsSaving(false)
+        return
+      }
+      const payload = {
+        id: tripData.id,
+        busId: tripData.busId,
+        routeId: tripData.routeId,
+        driverId: tripData.driverId,
+        supervisorId: tripData.supervisorId,
+        status: tripData.status,
+        arrivalTime: tripData.arrivalTime.slice(0, 16),
+        departureTime: tripData.departureTime.slice(0, 16)
+      }
+      await adminApi.updateTrip(tripId, payload)
       toast({
         title: "Trip Updated",
         description: "The trip has been updated successfully.",
       })
-
       router.push(`/admin/trips/${tripId}`)
     } catch (error) {
-      console.error("Error updating trip:", error)
       toast({
         variant: "destructive",
         title: "Error",
@@ -158,6 +168,7 @@ export default function EditTripPage() {
     )
   }
 
+  // --- UI ---
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
@@ -189,9 +200,9 @@ export default function EditTripPage() {
           <TabsList className="mb-4">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="notes">Notes & Details</TabsTrigger>
           </TabsList>
 
+          {/* --- Basic Information Tab --- */}
           <TabsContent value="basic">
             <Card>
               <CardHeader>
@@ -204,33 +215,23 @@ export default function EditTripPage() {
                     <Label htmlFor="route">Route Name</Label>
                     <Input
                       id="route"
-                      name="route"
-                      value={tripData.route}
+                      name="routeName"
+                      value={tripData.routeName || ""}
                       onChange={handleInputChange}
                       placeholder="Enter route name"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={tripData.date}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+                  {/* TODO: Add a select for routeId if you want to allow changing the route */}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="startTime">Start Time</Label>
                     <Input
-                      id="startTime"
-                      name="startTime"
-                      type="time"
-                      value={tripData.startTime}
+                      id="arrivalTime"
+                      name="arrivalTime"
+                      type="datetime-local"
+                      value={tripData?.arrivalTime?.slice(0, 16) || ""}
                       onChange={handleInputChange}
                       required
                     />
@@ -238,10 +239,10 @@ export default function EditTripPage() {
                   <div className="space-y-2">
                     <Label htmlFor="endTime">End Time</Label>
                     <Input
-                      id="endTime"
-                      name="endTime"
-                      type="time"
-                      value={tripData.endTime}
+                      id="departureTime"
+                      name="departureTime"
+                      type="datetime-local"
+                      value={tripData?.departureTime?.slice(0, 16) || ""}
                       onChange={handleInputChange}
                       required
                     />
@@ -249,12 +250,15 @@ export default function EditTripPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={tripData.status} onValueChange={(value) => handleSelectChange("status", value)}>
+                  <Select
+                    value={tripData.status ? tripData.status.toLowerCase() : ""}
+                    onValueChange={handleStatusChange}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={tripData.status || "Select status"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="planned">Planned</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -265,6 +269,7 @@ export default function EditTripPage() {
             </Card>
           </TabsContent>
 
+          {/* --- Assignments Tab --- */}
           <TabsContent value="assignments">
             <Card>
               <CardHeader>
@@ -274,13 +279,13 @@ export default function EditTripPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="busNumber">Bus</Label>
-                  <Select value={tripData.busNumber} onValueChange={(value) => handleSelectChange("busNumber", value)}>
+                  <Select defaultValue={tripData.busId ? String(tripData.busId) : ""} value={tripData.busId ? String(tripData.busId) : ""} onValueChange={handleBusChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select bus" />
+                      <SelectValue defaultValue={tripData.busId ? String(tripData.busId) : ""} placeholder={tripData.busNumber || "Select bus"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableBuses.map((bus) => (
-                        <SelectItem key={bus.id} value={bus.busNumber}>
+                      {availableBuses.map(bus => (
+                        <SelectItem key={bus.id} value={String(bus.id)}>
                           {bus.busNumber}
                         </SelectItem>
                       ))}
@@ -289,13 +294,23 @@ export default function EditTripPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="driver">Driver</Label>
-                  <Select value={tripData.driver} onValueChange={(value) => handleSelectChange("driver", value)}>
+                  <Select
+                    value={tripData.driverId ? String(tripData.driverId) : ""}
+                    onValueChange={value => {
+                      const driver = availableDrivers.find(d => String(d.id) === value);
+                      setTripData(prev => ({
+                        ...prev,
+                        driverId: value,
+                        driverName: driver ? driver.name : "",
+                      }));
+                    }}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select driver" />
+                      <SelectValue placeholder={tripData.driverName || "Select driver"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableDrivers.map((driver) => (
-                        <SelectItem key={driver.id} value={driver.name}>
+                      {availableDrivers.map(driver => (
+                        <SelectItem key={driver.id} value={String(driver.id)}>
                           {driver.name}
                         </SelectItem>
                       ))}
@@ -305,15 +320,22 @@ export default function EditTripPage() {
                 <div className="space-y-2">
                   <Label htmlFor="supervisor">Supervisor</Label>
                   <Select
-                    value={tripData.supervisor}
-                    onValueChange={(value) => handleSelectChange("supervisor", value)}
+                    value={tripData.supervisorId ? String(tripData.supervisorId) : ""}
+                    onValueChange={value => {
+                      const supervisor = availableSupervisors.find(s => String(s.id) === value);
+                      setTripData(prev => ({
+                        ...prev,
+                        supervisorId: value,
+                        supervisorName: supervisor ? supervisor.name : "",
+                      }));
+                    }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select supervisor" />
+                      <SelectValue placeholder={tripData.supervisorName || "Select supervisor"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableSupervisors.map((supervisor) => (
-                        <SelectItem key={supervisor.id} value={supervisor.name}>
+                      {availableSupervisors.map(supervisor => (
+                        <SelectItem key={supervisor.id} value={String(supervisor.id)}>
                           {supervisor.name}
                         </SelectItem>
                       ))}
@@ -321,36 +343,6 @@ export default function EditTripPage() {
                   </Select>
                 </div>
               </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes & Additional Details</CardTitle>
-                <CardDescription>Add any additional information about the trip</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={tripData.notes}
-                    onChange={handleInputChange}
-                    placeholder="Enter any additional notes about this trip"
-                    className="min-h-[150px]"
-                  />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" asChild>
-                  <Link href={`/admin/trips/${tripId}`}>Cancel</Link>
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>

@@ -78,13 +78,11 @@ export default function TripsPage() {
 
   const filteredTrips = trips.filter((trip) => {
     const matchesSearch =
-      trip.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trip.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trip.driver.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trip.supervisor.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesStatus = statusFilter ? trip.status === statusFilter : true
-
+      String(trip.busNumber || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(trip.routeName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(trip.driverName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(trip.supervisorName || "").toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = statusFilter ? (String(trip.status || "").toLowerCase() === statusFilter.toLowerCase()) : true
     return matchesSearch && matchesStatus
   })
 

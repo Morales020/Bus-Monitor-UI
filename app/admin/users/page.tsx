@@ -1,51 +1,61 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Search, Filter, Download, Eye, Pencil } from "lucide-react"
+import { PlusCircle, Search, Filter, Download, Eye, Pencil, MoreVertical } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { adminApi } from "@/lib/api-service"
+
 export default function UsersPage() {
   const { toast } = useToast()
   const [usersData, setUsersData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<string | null>(null)
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const handleRoleFilter = (role: string | null) => {
+    setRoleFilter(role)
+  }
 
   useEffect(() => {
-    // API INTEGRATION POINT: Fetch users
-    // Example:
+    // Fetch all users once
     const fetchUsers = async () => {
+      setIsLoading(true)
       try {
-        const data = await adminApi.getUsers();
-        console.log('Fetched users data:', data); // Debug log
-        setUsersData(data);
+        const data = await adminApi.getUsers()
+        setUsersData(data)
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching users:', error)
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to load users data. Please try again.",
-        });
+        })
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-    fetchUsers();
-
-    // Remove the mock data timer since we're using real API now
-    // const timer = setTimeout(() => {
-    //   setIsLoading(false)
-    // }, 1000)
-
-    // return () => clearTimeout(timer)
+    }
+    fetchUsers()
   }, [toast])
+
+  // Client-side filtering
+  const filteredUsers = usersData.filter((user) => {
+    const matchesSearch =
+      String(user.name || "").toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesRole = roleFilter ? (String(user.role || "").toLowerCase() === roleFilter.toLowerCase()) : true
+    return matchesSearch && matchesRole
+  })
 
   const handleDeleteUser = (userId: number) => {
     // API INTEGRATION POINT: Delete user
@@ -77,16 +87,6 @@ export default function UsersPage() {
       description: "The user has been deleted successfully.",
     })
   }
-
-  const filteredUsers = usersData.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesRole = roleFilter ? user.role === roleFilter : true
-
-    return matchesSearch && matchesRole
-  })
 
   const getUserRoleBadge = (role: string) => {
     console.log('Rendering role badge for:', role); // Debug log
@@ -153,7 +153,7 @@ export default function UsersPage() {
                 placeholder="Search users..."
                 className="pl-8"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
             <DropdownMenu>
@@ -164,11 +164,11 @@ export default function UsersPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setRoleFilter(null)}>All Roles</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter("admin")}>Admin</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter("supervisor")}>Supervisor</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter("driver")}>Driver</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter("parent")}>Parent</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleFilter(null)}>All Roles</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleFilter("admin")}>Admin</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleFilter("supervisor")}>Supervisor</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleFilter("driver")}>Driver</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRoleFilter("parent")}>Parent</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button variant="outline">
@@ -181,11 +181,12 @@ export default function UsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Username</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Last Login</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -193,38 +194,43 @@ export default function UsersPage() {
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id}>
+                      <TableCell>{user.id}</TableCell>
                       <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.username}</TableCell>
                       <TableCell>{getUserRoleBadge(user.role)}</TableCell>
                       <TableCell>{getUserStatusBadge(user.status)}</TableCell>
-                      <TableCell>{user.lastLogin}</TableCell>
+                      <TableCell>{user.phoneNumber ?? "N/A"}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex space-x-2">
-                          <Link href={`/admin/users/${user.id}`}>
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
+                        <div className="flex justify-end gap-2">
+                          <div className="flex space-x-2">
+                            {user.role?.toLowerCase() !== "admin" && (
+                              <Link href={`/admin/users/${user.id}/edit`}>
+                                <Button variant="outline" size="sm">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
+                          {user.role?.toLowerCase() !== "admin" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => handleDeleteUser(user.id)}
+                            >
+                              Delete
                             </Button>
-                          </Link>
-                          <Link href={`/admin/users/${user.id}/edit`}>
-                            <Button variant="outline" size="sm">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                          )}
+                          {user.role?.toLowerCase() === "admin" && (
+                            <span className="text-muted-foreground italic">Admin</span>
+                          )}
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          Delete
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={9} className="text-center py-4">
                       No users found matching your criteria
                     </TableCell>
                   </TableRow>

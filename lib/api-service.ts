@@ -22,6 +22,15 @@ const handleResponse = async (response: Response) => {
   if (!response.ok) {
     throw new Error("An error occurred while fetching data");
   }
+  // If there's no content, return null
+  if (response.status === 204) {
+    return null;
+  }
+  // If the response has no content-type or is empty, don't parse as JSON
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    return null;
+  }
   return response.json();
 }
 
@@ -113,7 +122,7 @@ export const adminApi = {
   deleteUser: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Users/${id}`, {
       method: "DELETE",
-      headers: createHeaders(false)
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
@@ -152,17 +161,21 @@ export const adminApi = {
 
   // Trip management
   getTrips: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/Trips`)
+    const response = await fetch(`${API_BASE_URL}/api/Trips`, {
+      headers: createHeaders(false)
+    })
     return handleResponse(response)
   },
   getTripById: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`)
+    const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`, {
+      headers: createHeaders(false)
+    })
     return handleResponse(response)
   },
   createTrip: async (tripData: any) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(tripData),
     })
     return handleResponse(response)
@@ -170,7 +183,7 @@ export const adminApi = {
   updateTrip: async (id: number, tripData: any) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: createHeaders(),
       body: JSON.stringify(tripData),
     })
     return handleResponse(response)
@@ -178,36 +191,42 @@ export const adminApi = {
   deleteTrip: async (id: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${id}`, {
       method: "DELETE",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
   assignStudentToTrip: async (tripId: number, studentId: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/students/${studentId}`, {
       method: "POST",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
   removeStudentFromTrip: async (tripId: number, studentId: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/students/${studentId}`, {
       method: "DELETE",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
   assignSupervisorToTrip: async (tripId: number, supervisorId: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/supervisor/${supervisorId}`, {
       method: "POST",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
   assignDriverToTrip: async (tripId: number, driverId: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/driver/${driverId}`, {
       method: "POST",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
   assignBusToTrip: async (tripId: number, busId: number) => {
     const response = await fetch(`${API_BASE_URL}/api/Trips/${tripId}/bus/${busId}`, {
       method: "POST",
+      headers: createHeaders()
     })
     return handleResponse(response)
   },
@@ -217,51 +236,51 @@ export const adminApi = {
 export const supervisorApi = {
   // Student management
   getStudents: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/students`)
+    const response = await fetch(`${API_BASE_URL}/api/Supervisor/assigned-students`)
     return handleResponse(response)
   },
   rateStudent: async (studentId: number, rating: string, notes: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/rate-student`, {
+    const response = await fetch(`${API_BASE_URL}/api/Supervisor/behavior-reports`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ studentId, rating, notes }),
     })
     return handleResponse(response)
   },
-  recordAbsence: async (studentId: number, reason: string, date: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/record-absence`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId, reason, date }),
-    })
-    return handleResponse(response)
-  },
-  contactParent: async (parentId: number, message: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/contact-parent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ parentId, message }),
-    })
-    return handleResponse(response)
-  },
+  // recordAbsence: async (studentId: number, reason: string, date: string) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/Supervisor/record-absence`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ studentId, reason, date }),
+  //   })
+  //   return handleResponse(response)
+  // },
+  // contactParent: async (parentId: number, message: string) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/Supervisor/contact-parent`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ parentId, message }),
+  //   })
+  //   return handleResponse(response)
+  // },
 
   // Trip management
   getAssignedTrips: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/trips`)
+    const response = await fetch(`${API_BASE_URL}/api/Supervisor/assigned-trips`)
     return handleResponse(response)
   },
   getTripHistory: async (tripId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/trips/${tripId}/history`)
+    const response = await fetch(`${API_BASE_URL}/api/Supervisor/trips/${tripId}/history`)
     return handleResponse(response)
   },
-  contactDriver: async (driverId: number, message: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/supervisor/contact-driver`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ driverId, message }),
-    })
-    return handleResponse(response)
-  },
+  // contactDriver: async (driverId: number, message: string) => {
+  //   const response = await fetch(`${API_BASE_URL}/api/Supervisor/contact-driver`, {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ driverId, message }),
+  //   })
+  //   return handleResponse(response)
+  // },
 }
 
 // Parent API endpoints

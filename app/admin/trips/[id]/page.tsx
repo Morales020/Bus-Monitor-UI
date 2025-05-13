@@ -30,6 +30,7 @@ export default function TripDetailsPage() {
   const [availableSupervisors, setAvailableSupervisors] = useState<any[]>([])
   const [availableDrivers, setAvailableDrivers] = useState<any[]>([])
   const [availableBuses, setAvailableBuses] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
 
   const tripId = Number(params.id)
 
@@ -42,13 +43,14 @@ export default function TripDetailsPage() {
         const trip = await adminApi.getTripById(tripId)
         setTripData(trip)
 
-        // Fetch available supervisors, drivers, and buses for assignment
+        // Fetch all users
         const users = await adminApi.getUsers()
+        setUsers(users)
         setAvailableSupervisors(users.filter((user: any) => user.role === "supervisor"))
         setAvailableDrivers(users.filter((user: any) => user.role === "driver"))
 
-        const buses = await adminApi.getBuses()
-        setAvailableBuses(buses)
+        // const buses = await adminApi.getBuses()
+        // setAvailableBuses(buses)
       } catch (error) {
         console.error("Error fetching trip data:", error)
         toast({
@@ -161,19 +163,23 @@ export default function TripDetailsPage() {
   }
 
   const getTripStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "active":
-        return <Badge className="bg-green-500">Active</Badge>
+        return <Badge className="bg-green-500 text-white">{status}</Badge>;
       case "completed":
-        return <Badge className="bg-blue-500">Completed</Badge>
-      case "scheduled":
-        return <Badge variant="outline">Scheduled</Badge>
+        return <Badge className="bg-blue-500 text-white">{status}</Badge>;
+      case "planned":
+        return <Badge className="bg-yellow-500 text-black">{status}</Badge>;
       case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>
+        return <Badge className="bg-red-500 text-white">{status}</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>
+        return <Badge variant="outline">{status || "Unknown"}</Badge>;
     }
-  }
+  };
+
+  // Find driver and supervisor user objects
+  const driverUser = users.find((u) => u.id === tripData?.driverId);
+  const supervisorUser = users.find((u) => u.id === tripData?.supervisorId);
 
   if (isLoading) {
     return (
@@ -237,7 +243,7 @@ export default function TripDetailsPage() {
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button variant="outline" onClick={() => {}}>
+                <Button variant="outline" onClick={() => { }}>
                   Cancel
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteTrip}>
@@ -264,19 +270,17 @@ export default function TripDetailsPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-muted-foreground">Route</p>
-                  <p className="font-medium">{tripData.route}</p>
+                  <p className="font-medium">{tripData.routeName}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Date</p>
-                  <p className="font-medium">{tripData.date}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Arrival Time</p>
+                  <p className="font-medium">{tripData.arrivalTime ?? "N/A"}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Time</p>
-                  <p className="font-medium">
-                    {tripData.startTime} - {tripData.endTime}
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Departure Time</p>
+                  <p className="font-medium">{tripData.departureTime ?? "N/A"}</p>
                 </div>
               </div>
               <div className="space-y-1">
@@ -293,62 +297,23 @@ export default function TripDetailsPage() {
               <CardTitle>Driver</CardTitle>
               <CardDescription>Assigned driver information</CardDescription>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Assign
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Assign Driver</DialogTitle>
-                  <DialogDescription>Select a driver to assign to this trip</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  {availableDrivers.map((driver) => (
-                    <div
-                      key={driver.id}
-                      className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
-                      onClick={() => handleAssignDriver(driver.id)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>{driver.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{driver.name}</p>
-                          <p className="text-xs text-muted-foreground">{driver.email}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Assign
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
+            
           </CardHeader>
           <CardContent>
-            {tripData.driver ? (
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={`/placeholder.svg?height=48&width=48`} alt={tripData.driver} />
-                  <AvatarFallback>{tripData.driver.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{tripData.driver}</p>
-                  <p className="text-sm text-muted-foreground">Contact: {tripData.driverContact || "N/A"}</p>
-                </div>
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="font-medium">
+                  {driverUser ? driverUser.name : "No driver assigned"}
+                </p>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center">
-                <UserPlus className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">No driver assigned</p>
-                <p className="text-xs text-muted-foreground">Click Assign to add a driver to this trip</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Contact</p>
+                <p className="font-medium">
+                  {driverUser ? driverUser.phoneNumber || "N/A" : "N/A"}
+                </p>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -358,62 +323,23 @@ export default function TripDetailsPage() {
               <CardTitle>Supervisor</CardTitle>
               <CardDescription>Assigned supervisor information</CardDescription>
             </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Assign
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Assign Supervisor</DialogTitle>
-                  <DialogDescription>Select a supervisor to assign to this trip</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  {availableSupervisors.map((supervisor) => (
-                    <div
-                      key={supervisor.id}
-                      className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-accent"
-                      onClick={() => handleAssignSupervisor(supervisor.id)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>{supervisor.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{supervisor.name}</p>
-                          <p className="text-xs text-muted-foreground">{supervisor.email}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Assign
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
+            
           </CardHeader>
           <CardContent>
-            {tripData.supervisor ? (
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={`/placeholder.svg?height=48&width=48`} alt={tripData.supervisor} />
-                  <AvatarFallback>{tripData.supervisor.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{tripData.supervisor}</p>
-                  <p className="text-sm text-muted-foreground">Contact: {tripData.supervisorContact || "N/A"}</p>
-                </div>
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="font-medium">
+                  {supervisorUser ? supervisorUser.name : "No supervisor assigned"}
+                </p>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center">
-                <UserPlus className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">No supervisor assigned</p>
-                <p className="text-xs text-muted-foreground">Click Assign to add a supervisor to this trip</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Contact</p>
+                <p className="font-medium">
+                  {supervisorUser ? supervisorUser.phoneNumber || "N/A" : "N/A"}
+                </p>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>

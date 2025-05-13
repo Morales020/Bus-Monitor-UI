@@ -19,7 +19,6 @@ export default function AdminDashboard() {
     activeTrips: 0,
     pendingIssues: 0,
   })
-  const [tripsData, setTripsData] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [trips, setTrips] = useState<any[]>([])
   // If you have issues API, add: const [issues, setIssues] = useState<any[]>([])
@@ -222,24 +221,26 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {tripsData.length > 0 ? (
-                  tripsData.map((trip) => (
-                    <div key={trip.id} className="flex justify-between items-center p-3 border rounded-md">
-                      <div>
-                        <p className="font-medium">
-                          {trip.busNumber} - {trip.route}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Driver: {trip.driver} | Supervisor: {trip.supervisor}
-                        </p>
+                {trips.filter(trip => trip.status?.toLowerCase() === "active").length > 0 ? (
+                  trips
+                    .filter(trip => trip.status?.toLowerCase() === "active")
+                    .map((trip) => (
+                      <div key={trip.id} className="flex justify-between items-center p-3 border rounded-md">
+                        <div>
+                          <p className="font-medium">
+                            {trip.busNumber} - {trip.routeName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Driver: {trip.driverName} | Supervisor: {trip.supervisorName}
+                          </p>
+                        </div>
+                        <Link href={`/admin/trips/${trip.id}`}>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
-                      <Link href={`/admin/trips/${trip.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <p className="text-center text-muted-foreground py-4">No active trips at the moment</p>
                 )}

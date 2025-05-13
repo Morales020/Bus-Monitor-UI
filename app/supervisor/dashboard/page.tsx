@@ -248,11 +248,9 @@ export default function SupervisorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                <p className="text-3xl font-bold">{stats.totalStudents}</p>
+                <h2 className="text-2xl font-bold">{stats.totalStudents}</h2>
               </div>
-              <div className="p-2 bg-primary/10 rounded-full">
-                <User className="h-6 w-6 text-primary" />
-              </div>
+              <User className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="mt-4">
               <Link href="/supervisor/students">
@@ -269,16 +267,16 @@ export default function SupervisorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Absent Students</p>
-                <p className="text-3xl font-bold">{stats.absentStudents}</p>
+                <h2 className="text-2xl font-bold">{stats.absentStudents}</h2>
               </div>
-              <div className="p-2 bg-primary/10 rounded-full">
-                <AlertCircle className="h-6 w-6 text-primary" />
-              </div>
+              <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="mt-4">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                View Absences
-              </Button>
+              <Link href="/supervisor/dashboard/absences">
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  View All Absences
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -288,16 +286,14 @@ export default function SupervisorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Trips</p>
-                <p className="text-3xl font-bold">{stats.activeTrips}</p>
+                <h2 className="text-2xl font-bold">{stats.activeTrips}</h2>
               </div>
-              <div className="p-2 bg-primary/10 rounded-full">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
+              <Clock className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="mt-4">
               <Link href="/supervisor/trips">
                 <Button variant="ghost" size="sm" className="w-full justify-start">
-                  View Trips
+                  View All Trips
                 </Button>
               </Link>
             </div>
@@ -309,16 +305,16 @@ export default function SupervisorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending Reports</p>
-                <p className="text-3xl font-bold">{stats.pendingReports}</p>
+                <h2 className="text-2xl font-bold">{stats.pendingReports}</h2>
               </div>
-              <div className="p-2 bg-primary/10 rounded-full">
-                <Star className="h-6 w-6 text-primary" />
-              </div>
+              <MessageSquare className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="mt-4">
-              <Button variant="ghost" size="sm" className="w-full justify-start">
-                View Reports
-              </Button>
+              <Link href="/supervisor/dashboard/pending-reports">
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  View All Reports
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

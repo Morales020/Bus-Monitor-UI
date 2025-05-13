@@ -25,7 +25,9 @@ export default function RootLayout({
           <ThemeWrapper>
             <div className="min-h-screen flex flex-col">
               {/* Navbar will be rendered inside each page that needs it */}
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                {children}
+              </main>
             </div>
             <Toaster />
           </ThemeWrapper>

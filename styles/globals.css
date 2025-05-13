@@ -48,6 +48,7 @@ body {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -88,7 +89,31 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Fix Leaflet map controls and tiles overflow in rounded containers */
+.leaflet-container {
+  border-radius: 0.75rem !important;
+  /* matches rounded-lg */
+  overflow: hidden !important;
+  z-index: -1 !important;
+}
+
+.leaflet-control {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+/* Ensure modals/dialogs always appear above the map */
+.DialogOverlay,
+.DialogContent,
+.modal,
+.dialog,
+.dialog-overlay,
+.dialog-content {
+  z-index: 1000 !important;
 }
