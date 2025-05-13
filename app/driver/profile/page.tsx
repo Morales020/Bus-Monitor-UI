@@ -33,9 +33,9 @@ export default function ProfilePage() {
         // Simulate API call with mock data
         setTimeout(() => {
           const mockUserData = {
-            name: "Driver User",
-            email: "driver@example.com",
-            phone: "555-123-4567",
+            name: "Karim Salah",
+            email: "karim.driver@example.com",
+            phone: "0100013156",
             role: "driver",
             avatar: null,
             notificationPreferences: {
@@ -170,7 +170,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
       <Tabs defaultValue="profile">

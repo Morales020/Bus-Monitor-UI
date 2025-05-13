@@ -21,6 +21,8 @@ type AdminData = {
   role: string
   phoneNumber: string
   username: string
+  password?: string
+  status: boolean
 }
 
 export default function ProfilePage() {
@@ -56,8 +58,11 @@ export default function ProfilePage() {
   }, [toast])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setUserData((prev: any) => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = e.target
+    setUserData((prev: any) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }))
   }
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -66,13 +71,18 @@ export default function ProfilePage() {
 
     setIsSaving(true)
     try {
-      await adminApi.updateUser(userData.id, {
+      const payload: any = {
+        id: userData.id,
         name: userData.name,
-        email: userData.email,
+        username: userData.username,
         phoneNumber: userData.phoneNumber,
-        username: userData.username
-      })
-
+        role: userData.role,
+        email: userData.email,
+        isactive: userData.status
+      }
+      if (userData.password) payload.password = userData.password
+      await adminApi.updateUser(userData.id, payload)
+      setUserData((prev: any) => ({ ...prev, password: "" }))
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
@@ -109,16 +119,21 @@ export default function ProfilePage() {
 
     setIsSaving(true)
     try {
-      await authApi.changePassword({
-        currentPassword: currentPassword.toString(),
-        newPassword: newPassword.toString()
-      })
-
+      const payload: any = {
+        id: userData.id,
+        name: userData.name,
+        username: userData.username,
+        password: newPassword.toString(),
+        phoneNumber: userData.phoneNumber,
+        role: userData.role,
+        email: userData.email,
+        isactive: userData.status
+      }
+      await adminApi.updateUser(userData.id, payload)
       toast({
         title: "Password Changed",
         description: "Your password has been changed successfully.",
       })
-
       form.reset()
     } catch (error) {
       console.error("Error changing password:", error)
@@ -134,7 +149,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-lg">Loading profile...</p>
@@ -145,7 +160,7 @@ export default function ProfilePage() {
 
   if (!userData) {
     return (
-      <div className="container py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-500">Error Loading Profile</h1>
           <p className="mt-2">Please try refreshing the page or contact support if the problem persists.</p>
@@ -155,7 +170,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
       <Tabs defaultValue="profile">

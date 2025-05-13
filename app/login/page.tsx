@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { authApi } from "@/lib/api-service"
+import { adminApi } from "@/lib/api-service"
 
 // Import the ApiError type
 interface ApiError extends Error {
@@ -60,13 +61,11 @@ export default function LoginPage() {
       localStorage.setItem(
         "user",
         JSON.stringify({
-          id: response.id,
-          username: username,
-          role: role,
+          ...response.user,
           token: response.token
         })
       )
-      console.log(response.id)
+      console.log(response.user.id)
 
       toast({
         title: "Login successful",
@@ -85,7 +84,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+    <div className="max-w-md mx-auto flex items-center justify-center min-h-screen px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>

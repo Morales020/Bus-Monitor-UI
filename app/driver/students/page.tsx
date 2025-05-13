@@ -159,7 +159,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Students</h1>
       </div>

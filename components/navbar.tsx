@@ -30,21 +30,24 @@ export default function Navbar({ userRole }: NavbarProps) {
   const router = useRouter()
 
   useEffect(() => {
-    // API integration point: Fetch user data
-    // Example:
-    // const fetchUserData = async () => {
-    //   try {
-    //     const response = await fetch('/api/user/profile');
-    //     if (!response.ok) throw new Error('Failed to fetch user data');
-    //     const data = await response.json();
-    //     setUserData(data);
-    //   } catch (error) {
-    //     console.error('Error fetching user data:', error);
-    //   }
-    // };
-    // fetchUserData();
-
-    // Simulate API call with mock data
+    // Try to get user data from localStorage first
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setUserData({
+            name: user.name || user.username || 'User',
+            email: user.email || `${user.username}@example.com`,
+            role: user.role,
+            avatar: null,
+          });
+          setUnreadNotifications(3);
+          return;
+        } catch { }
+      }
+    }
+    // Fallback to mock data
     setTimeout(() => {
       setUserData({
         name:
@@ -58,11 +61,10 @@ export default function Navbar({ userRole }: NavbarProps) {
         email: `${userRole}@example.com`,
         role: userRole,
         avatar: null,
-      })
-
-      setUnreadNotifications(3)
-    }, 500)
-  }, [userRole])
+      });
+      setUnreadNotifications(3);
+    }, 500);
+  }, [userRole]);
 
   const handleLogout = async () => {
     // API integration point: Logout
@@ -89,6 +91,7 @@ export default function Navbar({ userRole }: NavbarProps) {
           { href: "/admin/users", label: "Users" },
           { href: "/admin/buses", label: "Buses" },
           { href: "/admin/trips", label: "Trips" },
+          { href: "/admin/students", label: "Students" },
         ]
       case "supervisor":
         return [
@@ -130,9 +133,8 @@ export default function Navbar({ userRole }: NavbarProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors hover:text-foreground/80 ${
-                  pathname === link.href ? "text-foreground font-bold" : "text-foreground/60"
-                }`}
+                className={`transition-colors hover:text-foreground/80 ${pathname === link.href ? "text-foreground font-bold" : "text-foreground/60"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -214,9 +216,8 @@ export default function Navbar({ userRole }: NavbarProps) {
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`text-sm font-medium transition-colors hover:text-foreground/80 ${
-                          pathname === link.href ? "text-foreground font-bold" : "text-foreground/60"
-                        }`}
+                        className={`text-sm font-medium transition-colors hover:text-foreground/80 ${pathname === link.href ? "text-foreground font-bold" : "text-foreground/60"
+                          }`}
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {link.label}

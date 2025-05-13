@@ -117,3 +117,7 @@ body {
 .dialog-content {
   z-index: 1000 !important;
 }
+
+.custom-modal-z {
+  z-index: 2000 !important;
+}

@@ -141,10 +141,10 @@ export default function ParentDashboard() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">Parent Dashboard</h1>
 
-      <Tabs defaultValue="tracking">
+      <Tabs defaultValue="tracking" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="tracking">Bus Tracking</TabsTrigger>
           <TabsTrigger value="children">My Children</TabsTrigger>
@@ -191,69 +191,6 @@ export default function ParentDashboard() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <AlertTriangle className="mr-2 h-4 w-4" />
-                          Report Absence
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Report Absence for {child.name}</DialogTitle>
-                          <DialogDescription>Please provide a reason for your child's absence.</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="absence-reason">Reason for absence</Label>
-                            <Textarea
-                              id="absence-reason"
-                              placeholder="Please explain why your child will be absent..."
-                              className="min-h-[100px]"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="submit" onClick={() => handleReportAbsence(child.id, "Sick")}>
-                            Submit Report
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Contact Supervisor
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Contact Supervisor</DialogTitle>
-                          <DialogDescription>
-                            Send a message to {child.supervisor}, the supervisor for {child.busNumber}.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="supervisor-message">Message</Label>
-                            <Textarea
-                              id="supervisor-message"
-                              placeholder="Type your message here..."
-                              className="min-h-[100px]"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="submit" onClick={() => handleContactSupervisor(child.supervisor, "Message")}>
-                            Send Message
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </CardFooter>
                 </Card>
               ))}
             </div>

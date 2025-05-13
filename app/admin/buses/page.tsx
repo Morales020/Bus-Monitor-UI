@@ -164,7 +164,7 @@ export default function BusesPage() {
 
   if (isLoading) {
     return (
-      <div className="container flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-lg">Loading buses...</p>
@@ -174,7 +174,7 @@ export default function BusesPage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Buses Management</h1>
         <Link href="/admin/buses/new">

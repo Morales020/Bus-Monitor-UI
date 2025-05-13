@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import BusTrackingMap from "@/components/bus-tracking-map"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function DriverDashboard() {
   const { toast } = useToast()
@@ -300,7 +301,7 @@ export default function DriverDashboard() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">Driver Dashboard</h1>
 
       <Tabs defaultValue="trip">
@@ -367,13 +368,39 @@ export default function DriverDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    {tripData.stops.map((stop: any) => (
-                      <div key={stop.id} className="flex justify-between items-center p-3 border rounded-md">
+                    {tripData.stops.map((stop: any, idx: number) => (
+                      <div key={stop.id} className="flex justify-between items-center p-3 border rounded-md gap-4">
                         <div>
                           <p className="font-medium">{stop.name}</p>
                           <p className="text-sm text-muted-foreground">{stop.time}</p>
                         </div>
-                        {getStopStatusBadge(stop.status)}
+                        <div className="flex items-center gap-2">
+                          {getStopStatusBadge(stop.status)}
+                          <Select
+                            value={stop.status}
+                            onValueChange={async (newStatus) => {
+                              // Simulate API call
+                              await new Promise((resolve) => setTimeout(resolve, 500));
+                              const updatedStops = tripData.stops.map((s: any, i: number) =>
+                                i === idx ? { ...s, status: newStatus } : s
+                              );
+                              setTripData({ ...tripData, stops: updatedStops });
+                              toast({
+                                title: "Stop Status Updated",
+                                description: `${stop.name} status changed to ${newStatus}.`,
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="current">Current</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     ))}
                   </div>

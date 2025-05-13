@@ -174,7 +174,7 @@ export default function ChildrenPage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">My Children</h1>
 
       <div className="grid gap-6 md:grid-cols-2">

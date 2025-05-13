@@ -238,7 +238,7 @@ export default function SupervisorDashboard() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">Supervisor Dashboard</h1>
 
       {/* Stats Overview */}

@@ -29,7 +29,7 @@ export default function AdminLayout({
 
     try {
       const userData = JSON.parse(user)
-      if (!userData.token || userData.role !== 'admin') {
+      if (!userData.token || userData.role.toLowerCase() !== 'admin') {
         toast({
           variant: "destructive",
           title: "Access Denied",

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Users, BusIcon, Calendar, AlertTriangle } from "lucide-react"
+import { PlusCircle, Users, BusIcon, Calendar, AlertTriangle, GraduationCap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { adminApi } from "@/lib/api-service"
@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   })
   const [users, setUsers] = useState<any[]>([])
   const [trips, setTrips] = useState<any[]>([])
+  const [students, setStudents] = useState<any[]>([])
   // If you have issues API, add: const [issues, setIssues] = useState<any[]>([])
 
   useEffect(() => {
@@ -32,6 +33,21 @@ export default function AdminDashboard() {
         ])
         setUsers(usersData)
         setTrips(tripsData)
+        // Simulate fetching students (replace with adminApi.getStudents() when available)
+        setStudents([
+          { id: 1, name: "Emma Johnson" },
+          { id: 2, name: "Liam Smith" },
+          { id: 3, name: "Olivia Davis" },
+          { id: 4, name: "Noah Wilson" },
+          { id: 5, name: "Ava Brown" },
+          { id: 6, name: "Sophia Miller" },
+        ])
+        // Simulate fetching buses (replace with adminApi.getBuses() when available)
+        setStats((prev) => ({
+          ...prev,
+          totalBuses: 6,
+          pendingIssues: 3, // Set mock value for pending issues
+        }))
         // setIssues(issuesData)
       } catch (error) {
         toast({
@@ -49,6 +65,7 @@ export default function AdminDashboard() {
   const totalUsers = users.length
   const totalTrips = trips.length
   const activeTrips = trips.filter(t => t.status?.toLowerCase() === "active").length
+  const totalStudents = students.length
   // const pendingIssues = issues.length // If you have issues API
 
   if (isLoading) {
@@ -63,11 +80,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">Administrator Dashboard</h1>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -104,6 +121,27 @@ export default function AdminDashboard() {
               <Link href="/admin/buses">
                 <Button variant="ghost" size="sm" className="w-full justify-start">
                   View All Buses
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                <p className="text-3xl font-bold">{totalStudents}</p>
+              </div>
+              <div className="p-2 bg-primary/10 rounded-full">
+                <GraduationCap className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Link href="/admin/students">
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  View All Students
                 </Button>
               </Link>
             </div>

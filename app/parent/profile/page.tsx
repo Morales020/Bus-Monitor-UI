@@ -37,7 +37,7 @@ export default function ParentProfilePage() {
         // In a real app, fetch the user profile from the API
         const userData = await authApi.getUserProfile()
         setProfileData({
-          name: userData.name || "John Smith",
+          name: userData.name || "Rania",
           email: userData.email || "john.smith@example.com",
           phone: userData.phone || "555-123-4567",
           address: userData.address || "123 Main St, Anytown, USA",
@@ -147,7 +147,7 @@ export default function ParentProfilePage() {
   }
 
   return (
-    <div className="container py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
